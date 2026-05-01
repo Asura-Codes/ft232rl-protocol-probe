@@ -44,7 +44,14 @@ jobs:
       uses: actions/checkout@v4
 
     # =========================
-    # vcpkg (PINNED VERSION)
+    # INSTALL NINJA (FIX)
+    # =========================
+    - name: Install Ninja (Linux)
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+    # =========================
+    # vcpkg (PINNED)
     # =========================
     - name: Clone vcpkg
       run: git clone https://github.com/microsoft/vcpkg.git
@@ -78,7 +85,7 @@ jobs:
         key: ${{ runner.os }}-vcpkg-2025.04.09-${{ hashFiles('vcpkg.json') }}
 
     # =========================
-    # Build setup
+    # Build directory
     # =========================
     - name: Set build dir
       id: strings
@@ -86,11 +93,12 @@ jobs:
       run: echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     # =========================
-    # Configure CMake
+    # CONFIGURE (NINJA FIXED)
     # =========================
     - name: Configure CMake
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -G Ninja
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -98,27 +106,27 @@ jobs:
         -S ${{ github.workspace }}
 
     # =========================
-    # Build
+    # BUILD
     # =========================
     - name: Build
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
 
     # =========================
-    # Test
+    # TEST
     # =========================
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       run: ctest --build-config ${{ matrix.build_type }}
 
     # =========================
-    # Package (CPack)
+    # PACKAGE (CPACK)
     # =========================
     - name: Package
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       run: cpack -C ${{ matrix.build_type }}
 
     # =========================
-    # Upload artifacts
+    # UPLOAD ARTIFACTS
     # =========================
     - name: Upload package
       uses: actions/upload-artifact@v4
