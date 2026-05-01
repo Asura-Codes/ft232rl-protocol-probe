@@ -1,0 +1,127 @@
+name: CMake multi-platform build + vcpkg + CPack
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release]
+        c_compiler: [gcc, clang, cl]
+
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+
+        exclude:
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
+          - os: ubuntu-latest
+            c_compiler: cl
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # =========================
+    # vcpkg (PINNED VERSION)
+    # =========================
+    - name: Clone vcpkg
+      run: git clone https://github.com/microsoft/vcpkg.git
+
+    - name: Checkout vcpkg version
+      working-directory: vcpkg
+      run: git checkout 2025.04.09
+
+    - name: Bootstrap vcpkg (Linux)
+      if: runner.os != 'Windows'
+      run: ./vcpkg/bootstrap-vcpkg.sh
+
+    - name: Bootstrap vcpkg (Windows)
+      if: runner.os == 'Windows'
+      run: .\vcpkg\bootstrap-vcpkg.bat
+
+    - name: Set VCPKG_ROOT
+      shell: bash
+      run: echo "VCPKG_ROOT=${{ github.workspace }}/vcpkg" >> $GITHUB_ENV
+
+    # =========================
+    # Cache vcpkg
+    # =========================
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ env.VCPKG_ROOT }}/installed
+          ${{ env.VCPKG_ROOT }}/packages
+          ~/.cache/vcpkg
+        key: ${{ runner.os }}-vcpkg-2025.04.09-${{ hashFiles('vcpkg.json') }}
+
+    # =========================
+    # Build setup
+    # =========================
+    - name: Set build dir
+      id: strings
+      shell: bash
+      run: echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    # =========================
+    # Configure CMake
+    # =========================
+    - name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+        -S ${{ github.workspace }}
+
+    # =========================
+    # Build
+    # =========================
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    # =========================
+    # Test
+    # =========================
+    - name: Test
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      run: ctest --build-config ${{ matrix.build_type }}
+
+    # =========================
+    # Package (CPack)
+    # =========================
+    - name: Package
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      run: cpack -C ${{ matrix.build_type }}
+
+    # =========================
+    # Upload artifacts
+    # =========================
+    - name: Upload package
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ runner.os }}-${{ matrix.build_type }}
+        path: ${{ steps.strings.outputs.build-output-dir }}/*
