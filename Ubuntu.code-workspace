@@ -1,0 +1,176 @@
+{
+    "folders": [
+        { "path": "." }
+    ],
+    "settings": {
+        "cmake.configureOnOpen": true,
+        "cmake.cmakePath": "cmake",
+        "cmake.configureArgs": [
+            "-DCMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "-DVCPKG_TARGET_TRIPLET=x64-linux",
+            "-DVCPKG_INSTALLED_DIR=${workspaceFolder}/vcpkg_installed"
+        ],
+        "cmake.debugConfig": {
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal"
+        },
+        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+        "C_Cpp.default.cppStandard": "c++17",
+        "C_Cpp.default.intelliSenseMode": "linux-gcc-x64"
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.cpptools",
+            "ms-vscode.cmake-tools",
+            "editorconfig.editorconfig",
+            "sanaajani.taskrunnercode"
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Debug Discovery CLI",
+                "type": "cppdbg",
+                "request": "launch",
+                "program": "${workspaceFolder}/build/bin/protocol_probe",
+                "args": [
+                    "--command=discover",
+                    "--duration=500"
+                ],
+                "stopAtEntry": false,
+                "cwd": "${workspaceFolder}",
+                "environment": [
+                    {
+                        "name": "PATH",
+                        "value": "${env:PATH}:${workspaceFolder}/build/bin"
+                    }
+                ],
+                "MIMode": "gdb",
+                "miDebuggerPath": "/usr/bin/gdb",
+                "preLaunchTask": "CMake: Build Debug"
+            },
+            {
+                "name": "Debug FTDI Exploit (Server)",
+                "type": "cppdbg",
+                "request": "launch",
+                "program": "${workspaceFolder}/build/bin/protocol_probe",
+                "args": [],
+                "stopAtEntry": false,
+                "cwd": "${workspaceFolder}",
+                "environment": [
+                    {
+                        "name": "PATH",
+                        "value": "${env:PATH}:${workspaceFolder}/build/bin"
+                    }
+                ],
+                "MIMode": "gdb",
+                "miDebuggerPath": "/usr/bin/gdb",
+                "preLaunchTask": "CMake: Build Debug"
+            }
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "CMake: Configure",
+                "type": "shell",
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-DCMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "-DVCPKG_TARGET_TRIPLET=x64-linux",
+                    "-DVCPKG_INSTALLED_DIR=${workspaceFolder}/vcpkg_installed",
+                    "-DCMAKE_BUILD_TYPE=Debug"
+                ],
+                "group": "build",
+                "problemMatcher": [],
+                "detail": "Configure the project for Debug build"
+            },
+            {
+                "label": "CMake: Configure Release",
+                "type": "shell",
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-DCMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "-DVCPKG_TARGET_TRIPLET=x64-linux",
+                    "-DVCPKG_INSTALLED_DIR=${workspaceFolder}/vcpkg_installed",
+                    "-DCMAKE_BUILD_TYPE=Release"
+                ],
+                "group": "build",
+                "problemMatcher": [],
+                "detail": "Configure the project for Release build"
+            },
+            {
+                "label": "CMake: Build Debug",
+                "type": "shell",
+                "command": "cmake",
+                "args": [
+                    "--build",
+                    "${workspaceFolder}/build"
+                ],
+                "group": "build",
+                "dependsOn": [
+                    "CMake: Configure"
+                ],
+                "problemMatcher": "$gcc"
+            },
+            {
+                "label": "CMake: Build Release",
+                "type": "shell",
+                "command": "cmake",
+                "args": [
+                    "--build",
+                    "${workspaceFolder}/build"
+                ],
+                "group": "build",
+                "dependsOn": [
+                    "CMake: Configure Release"
+                ],
+                "problemMatcher": "$gcc"
+            },
+            {
+                "label": "CMake: Package",
+                "type": "shell",
+                "command": "cpack",
+                "args": [
+                    "--config",
+                    "${workspaceFolder}/build/CPackConfig.cmake"
+                ],
+                "group": "build",
+                "dependsOn": [
+                    "CMake: Build Release"
+                ],
+                "problemMatcher": []
+            },
+            {
+                "label": "Docker: Build protocolprobe-ubuntu",
+                "type": "shell",
+                "command": "docker",
+                "args": [
+                    "build",
+                    "-f",
+                    "Dockerfile.ubuntu",
+                    "-t",
+                    "protocolprobe-ubuntu",
+                    "."
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                },
+                "group": "build",
+                "problemMatcher": [],
+                "detail": "Build the protocolprobe-ubuntu Docker image"
+            }
+        ]
+    }
+}

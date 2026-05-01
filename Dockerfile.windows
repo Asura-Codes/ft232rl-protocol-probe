@@ -1,0 +1,68 @@
+# escape=`
+# Dockerfile.windows
+# Build context must be set to the repository root (the directory containing this file).
+# Example: docker build -f Dockerfile.windows .
+#
+# Base image ships with VS Build Tools, MSBuild, and .NET SDK.
+# Only CMake and Git need to be added on top.
+#
+# Requires Docker to be in Windows containers mode.
+
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022
+
+SHELL ["cmd", "/S", "/C"]
+
+# Install Chocolatey, then use it to install CMake and Git
+RUN powershell -NoProfile -ExecutionPolicy Bypass -Command `
+    "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+     iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+
+RUN choco install cmake --installargs "ADD_CMAKE_TO_PATH=System" -y && `
+    choco install git -y && `
+    choco install ninja -y
+
+# Install MSVC C++ Build Tools to C:\BuildTools.
+# Uses PowerShell Start-Process -Wait (the Microsoft-recommended Docker pattern).
+# After install, removes C:\Program Files (x86)\Microsoft Visual Studio\Installer —
+# that directory contains reparse points that cause hcsshim::ImportLayer to fail
+# with "path not found" when Docker tries to commit the layer.
+# Exit 3010 = reboot-required but success.
+SHELL ["powershell", "-NoProfile", "-Command", "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue';"]
+
+RUN Invoke-WebRequest 'https://aka.ms/vs/17/release/vs_buildtools.exe' `
+        -OutFile 'C:\vs_bt.exe' -UseBasicParsing; `
+    $p = Start-Process 'C:\vs_bt.exe' `
+        -ArgumentList '--quiet','--wait','--norestart','--nocache', `
+                      '--installPath','C:\BuildTools', `
+                      '--add','Microsoft.VisualStudio.Workload.VCTools', `
+                      '--add','Microsoft.VisualStudio.Component.VC.Tools.x86.x64', `
+                      '--add','Microsoft.VisualStudio.Component.Windows10SDK.19041' `
+        -NoNewWindow -Wait -PassThru; `
+    Remove-Item 'C:\vs_bt.exe' -Force -ErrorAction SilentlyContinue; `
+    Remove-Item -Recurse -Force 'C:\Program Files (x86)\Microsoft Visual Studio\Installer' -ErrorAction SilentlyContinue; `
+    if ($p.ExitCode -notin @(0,3010)) { exit $p.ExitCode }
+
+# Install the VC++ redistributable so MSVC runtime DLLs (msvcp140.dll etc.) are
+# available system-wide. Without this, vcpkg's downloaded ninja.exe fails to run
+# on Windows Server Core because the MSVC CRT is not present in System32.
+RUN Invoke-WebRequest 'https://aka.ms/vs/17/release/vc_redist.x64.exe' `
+        -OutFile 'C:\vc_redist.x64.exe' -UseBasicParsing; `
+    $r = Start-Process 'C:\vc_redist.x64.exe' `
+        -ArgumentList '/quiet', '/norestart' `
+        -NoNewWindow -Wait -PassThru; `
+    Remove-Item 'C:\vc_redist.x64.exe' -Force -ErrorAction SilentlyContinue; `
+    if ($r.ExitCode -notin @(0,3010)) { exit $r.ExitCode }
+
+# Tell vcpkg where to find the VS instance installed above.
+ENV VCPKG_VISUAL_STUDIO_PATH=C:\BuildTools
+
+SHELL ["cmd", "/S", "/C"]
+
+# Clone vcpkg at a pinned tag for reproducibility
+RUN git clone --branch 2025.04.09 --depth 1 https://github.com/microsoft/vcpkg.git C:\vcpkg && `
+    C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+ENV VCPKG_ROOT=C:\vcpkg
+RUN setx PATH "%PATH%;C:\vcpkg"
+
+WORKDIR C:\workspace

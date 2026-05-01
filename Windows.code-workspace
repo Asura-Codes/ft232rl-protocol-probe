@@ -1,0 +1,222 @@
+{
+    "folders": [
+        { "path": "." }
+    ],
+    "settings": {
+        "cmake.configureOnOpen": true,
+        "cmake.cmakePath": "C:/CMake/bin/cmake.exe",
+        "cmake.configureArgs": [
+            "-DCMAKE_TOOLCHAIN_FILE=c:/vcpkg20250409/scripts/buildsystems/vcpkg.cmake",
+            "-DVCPKG_TARGET_TRIPLET=x64-windows",
+            "-DVCPKG_INSTALLED_DIR=${workspaceFolder}/vcpkg_installed"
+        ],
+        "cmake.debugConfig": {
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal"
+        },
+        "C_Cpp.default.configurationProvider": "msvc",
+        "C_Cpp.default.cppStandard": "c++17",
+        "C_Cpp.default.intelliSenseMode": "windows-msvc-x64"
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.cpptools",
+            "ms-vscode.cmake-tools",
+            "editorconfig.editorconfig",
+            "sanaajani.taskrunnercode"
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Debug Discovery CLI",
+                "type": "cppvsdbg",
+                "request": "launch",
+                "program": "${workspaceFolder}/build/bin/Debug/protocol_probe.exe",
+                "args": [
+                    "/command:discover",
+                    "/duration:500"
+                ],
+                "stopAtEntry": false,
+                "cwd": "${workspaceFolder}",
+                "environment": [
+                    {
+                        "name": "PATH",
+                        "value": "${env:PATH};${workspaceFolder}/build/bin/Debug"
+                    }
+                ],
+                "console": "integratedTerminal",
+                "preLaunchTask": "CMake: Build Debug"
+            },
+            {
+                "name": "Debug FTDI Exploit (Server)",
+                "type": "cppvsdbg",
+                "request": "launch",
+                "program": "${workspaceFolder}/build/bin/Debug/protocol_probe.exe",
+                "args": [],
+                "stopAtEntry": false,
+                "cwd": "${workspaceFolder}",
+                "environment": [
+                    {
+                        "name": "PATH",
+                        "value": "${env:PATH};${workspaceFolder}/build/bin/Debug"
+                    }
+                ],
+                "console": "integratedTerminal",
+                "preLaunchTask": "CMake: Build Debug"
+            }
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "CMake: Configure",
+                "type": "shell",
+                "command": "C:/CMake/bin/cmake.exe",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-DCMAKE_TOOLCHAIN_FILE=c:/vcpkg20250409/scripts/buildsystems/vcpkg.cmake",
+                    "-DVCPKG_TARGET_TRIPLET=x64-windows",
+                    "-DVCPKG_INSTALLED_DIR=${workspaceFolder}/vcpkg_installed"
+                ],
+                "group": "build",
+                "problemMatcher": [],
+                "detail": "Configure the project using vcpkg and CMake"
+            },
+            {
+                "label": "CMake: Build Debug",
+                "type": "shell",
+                "command": "C:/CMake/bin/cmake.exe",
+                "args": [
+                    "--build",
+                    "${workspaceFolder}/build",
+                    "--config",
+                    "Debug"
+                ],
+                "group": "build",
+                "dependsOn": [
+                    "CMake: Configure"
+                ],
+                "problemMatcher": "$msCompile"
+            },
+            {
+                "label": "CMake: Build Release",
+                "type": "shell",
+                "command": "C:/CMake/bin/cmake.exe",
+                "args": [
+                    "--build",
+                    "${workspaceFolder}/build",
+                    "--config",
+                    "Release"
+                ],
+                "group": "build",
+                "dependsOn": [
+                    "CMake: Configure"
+                ],
+                "problemMatcher": "$msCompile"
+            },
+            {
+                "label": "CMake: Package",
+                "type": "shell",
+                "command": "C:/CMake/bin/cpack.exe",
+                "args": [
+                    "--config",
+                    "${workspaceFolder}/build/CPackConfig.cmake",
+                    "-C",
+                    "Release"
+                ],
+                "group": "build",
+                "dependsOn": [
+                    "CMake: Build Release"
+                ],
+                "problemMatcher": []
+            },
+            {
+                "label": "Docker: Build Ubuntu Image",
+                "type": "shell",
+                "command": "docker",
+                "args": [
+                    "build",
+                    "-f",
+                    "Dockerfile.ubuntu",
+                    "-t",
+                    "protocolprobe-ubuntu",
+                    "."
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                },
+                "group": "build",
+                "problemMatcher": [],
+                "detail": "Build the protocolprobe-ubuntu Docker image"
+            },
+            {
+                "label": "Docker: Build Windows Image",
+                "type": "shell",
+                "command": "docker",
+                "args": [
+                    "build",
+                    "-f",
+                    "Dockerfile.windows",
+                    "-t",
+                    "protocolprobe-windows",
+                    "."
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                },
+                "group": "build",
+                "problemMatcher": [],
+                "detail": "Build the protocolprobe-windows Docker image (requires Windows containers mode)"
+            },
+            {
+                "label": "Docker: Build Release (Windows Container)",
+                "type": "shell",
+                "command": "docker",
+                "args": [
+                    "run", "--rm",
+                    "-v", "${workspaceFolder}:C:\\workspace",
+                    "protocolprobe-windows",
+                    "cmd", "/S", "/C",
+                    "C:\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat x64 && set PATH=C:\\Program Files\\CMake\\bin;C:\\ProgramData\\chocolatey\\bin;%PATH% && if exist C:\\workspace\\build-docker\\CMakeCache.txt del /q C:\\workspace\\build-docker\\CMakeCache.txt && cmake -S C:\\workspace -B C:\\workspace\\build-docker -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows -DVCPKG_INSTALLED_DIR=C:\\workspace\\vcpkg_installed && cmake --build C:\\workspace\\build-docker"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                },
+                "group": "build",
+                "dependsOn": [
+                    "Docker: Build Windows Image"
+                ],
+                "problemMatcher": "$msCompile",
+                "detail": "Configure and build the project inside the protocolprobe-windows container"
+            },
+            {
+                "label": "Docker: CPack (Windows Container)",
+                "type": "shell",
+                "command": "docker",
+                "args": [
+                    "run", "--rm",
+                    "-v", "${workspaceFolder}:C:\\workspace",
+                    "protocolprobe-windows",
+                    "cmd", "/S", "/C",
+                    "C:\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat x64 && set PATH=C:\\Program Files\\CMake\\bin;C:\\ProgramData\\chocolatey\\bin;%PATH% && cpack --config C:\\workspace\\build-docker\\CPackConfig.cmake"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                },
+                "group": "build",
+                "dependsOn": [
+                    "Docker: Build Release (Windows Container)"
+                ],
+                "problemMatcher": [],
+                "detail": "Package the Release build with CPack inside the protocolprobe-windows container (produces ZIP and 7Z)"
+            }
+        ]
+    }
+}

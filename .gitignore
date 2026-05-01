@@ -1,0 +1,48 @@
+# Build output
+build/
+
+# vcpkg installed packages (generated, not source)
+vcpkg_installed/
+
+# Visual Studio / MSVC
+*.user
+*.suo
+*.sdf
+*.opensdf
+.vs/
+*.VC.db
+*.VC.opendb
+ipch/
+
+# CMake
+CMakeSettings.json
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+install_manifest.txt
+_CPack_Packages/
+
+# Compiled binaries
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.obj
+*.iobj
+*.ipdb
+
+# CPack packages
+*.zip
+*.7z
+*.tar.gz
+*.msi
+*.nsis
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

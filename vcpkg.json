@@ -1,0 +1,8 @@
+{
+  "name": "ft232rl-exploit-toolkit",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "libftdi1",
+    "poco"
+  ]
+}

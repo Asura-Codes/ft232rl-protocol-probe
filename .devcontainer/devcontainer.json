@@ -1,0 +1,26 @@
+{
+    "name": "ProtocolProbe (default: Ubuntu)",
+    "dockerFile": "../Dockerfile.ubuntu",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools-extension-pack"
+            ],
+            "settings": {
+                "cmake.cmakePath": "cmake",
+                "cmake.configureArgs": [
+                    "-DCMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "-DVCPKG_TARGET_TRIPLET=x64-linux",
+                    "-DVCPKG_INSTALLED_DIR=${workspaceFolder}/vcpkg_installed"
+                ],
+                "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+                "C_Cpp.default.cppStandard": "c++17"
+            }
+        }
+    },
+    "workspaceFolder": "/workspace",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "remoteUser": "root"
+}

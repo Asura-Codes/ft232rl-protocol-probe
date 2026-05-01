@@ -1,0 +1,39 @@
+# Dockerfile.ubuntu
+# Build context must be set to the repository root (the directory containing this file).
+# Example: docker build -f Dockerfile.ubuntu .
+#
+# This image targets the x64-linux vcpkg triplet.
+# vcpkg install is NOT run here; it runs automatically on first CMake configure.
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    build-essential \
+    cmake \
+    git \
+    ninja-build \
+    curl \
+    zip \
+    unzip \
+    tar \
+    pkg-config \
+    gdb \
+    libftdi1-dev \
+    autoconf \
+    autoconf-archive \
+    automake \
+    libtool \
+    libudev-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+# Clone and bootstrap vcpkg at a pinned tag for reproducibility
+RUN git clone --branch 2025.04.09 --depth 1 https://github.com/microsoft/vcpkg.git /vcpkg && \
+    /vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+ENV VCPKG_ROOT=/vcpkg
+ENV PATH="/vcpkg:${PATH}"
+
+WORKDIR /workspace
