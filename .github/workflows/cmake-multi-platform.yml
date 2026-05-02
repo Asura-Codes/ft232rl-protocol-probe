@@ -119,6 +119,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+        -DVCPKG_INSTALLED_DIR=${{ github.workspace }}/vcpkg_installed
         -S ${{ github.workspace }}
 
     # =========================
@@ -148,4 +149,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ runner.os }}-${{ matrix.build_type }}
-        path: ${{ steps.strings.outputs.build-output-dir }}/*
+        path: |
+          ${{ steps.strings.outputs.build-output-dir }}/*.zip
+          ${{ steps.strings.outputs.build-output-dir }}/*.7z
+          ${{ steps.strings.outputs.build-output-dir }}/*.tar.gz
