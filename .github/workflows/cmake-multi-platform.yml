@@ -1,5 +1,8 @@
 name: CMake multi-platform build + vcpkg + CPack
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ "main" ]
@@ -10,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
 
     strategy:
       fail-fast: false
@@ -156,14 +161,28 @@ jobs:
         name: ft232rl-protocol-probe-${{ steps.version.outputs.number }}-${{ runner.os }}
         path: |
           ${{ steps.strings.outputs.build-output-dir }}/bin
+        if-no-files-found: error
 
-    # =========================
-    # CREATE RELEASE (on tag push)
-    # =========================
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: ft232rl-protocol-probe-*
+        path: release-artifacts
+
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: ${{ steps.strings.outputs.build-output-dir }}/bin
+        files: |
+          release-artifacts/**/*.zip
+          release-artifacts/**/*.7z
+          release-artifacts/**/*.tar.gz
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN != '' && secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}

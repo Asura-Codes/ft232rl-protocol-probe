@@ -82,7 +82,7 @@ endif()
 # CPack configuration
 set(CPACK_PACKAGE_NAME "ProtocolProbe")
 set(CPACK_PACKAGE_VENDOR "Dev")
-set(CPACK_PACKAGE_VERSION "0.1.0")
+set(CPACK_PACKAGE_VERSION "0.1.1")
 if(WIN32)
     set(CPACK_GENERATOR "ZIP")
 else()
