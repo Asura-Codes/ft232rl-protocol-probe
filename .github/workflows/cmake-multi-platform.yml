@@ -143,12 +143,22 @@ jobs:
       run: cpack -C ${{ matrix.build_type }}
 
     # =========================
+    # EXTRACT VERSION
+    # =========================
+    - name: Extract version
+      id: version
+      shell: bash
+      run: |
+        VERSION=$(grep -oP 'set\(CPACK_PACKAGE_VERSION "\K[^"]+' CMakeLists.txt)
+        echo "number=$VERSION" >> $GITHUB_OUTPUT
+
+    # =========================
     # UPLOAD ARTIFACTS
     # =========================
     - name: Upload package
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ runner.os }}-${{ matrix.build_type }}
+        name: ft232rl-protocol-probe-${{ steps.version.outputs.number }}-${{ runner.os }}
         path: |
           ${{ steps.strings.outputs.build-output-dir }}/*.zip
           ${{ steps.strings.outputs.build-output-dir }}/*.7z
