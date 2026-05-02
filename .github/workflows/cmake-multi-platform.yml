@@ -3,6 +3,7 @@ name: CMake multi-platform build + vcpkg + CPack
 on:
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
 
@@ -16,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang, cl]
+        c_compiler: [gcc, cl]
 
         include:
           - os: windows-latest
@@ -27,15 +28,9 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
 
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-
         exclude:
           - os: windows-latest
             c_compiler: gcc
-          - os: windows-latest
-            c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
 
@@ -149,7 +144,7 @@ jobs:
       id: version
       shell: bash
       run: |
-        VERSION=$(grep -oP 'set\(CPACK_PACKAGE_VERSION "\K[^"]+' CMakeLists.txt)
+        VERSION=$(awk -F'"' '/^[[:space:]]*set\(CPACK_PACKAGE_VERSION[[:space:]]*"/ {print $2; exit}' CMakeLists.txt)
         echo "number=$VERSION" >> $GITHUB_OUTPUT
 
     # =========================
@@ -161,3 +156,14 @@ jobs:
         name: ft232rl-protocol-probe-${{ steps.version.outputs.number }}-${{ runner.os }}
         path: |
           ${{ steps.strings.outputs.build-output-dir }}/bin
+
+    # =========================
+    # CREATE RELEASE (on tag push)
+    # =========================
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ steps.strings.outputs.build-output-dir }}/bin
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
