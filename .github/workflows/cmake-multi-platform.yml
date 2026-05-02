@@ -177,12 +177,15 @@ jobs:
         pattern: ft232rl-protocol-probe-*
         path: release-artifacts
 
+    - name: List downloaded artifacts
+      run: find release-artifacts -type f | sort
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          release-artifacts/**/*.zip
-          release-artifacts/**/*.7z
-          release-artifacts/**/*.tar.gz
+          release-artifacts/*/*.zip
+          release-artifacts/*/*.7z
+          release-artifacts/*/*.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN != '' && secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
