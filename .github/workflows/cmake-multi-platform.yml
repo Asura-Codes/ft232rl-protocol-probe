@@ -160,6 +160,4 @@ jobs:
       with:
         name: ft232rl-protocol-probe-${{ steps.version.outputs.number }}-${{ runner.os }}
         path: |
-          ${{ steps.strings.outputs.build-output-dir }}/*.zip
-          ${{ steps.strings.outputs.build-output-dir }}/*.7z
-          ${{ steps.strings.outputs.build-output-dir }}/*.tar.gz
+          ${{ steps.strings.outputs.build-output-dir }}/bin
