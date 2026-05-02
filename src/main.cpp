@@ -21,6 +21,7 @@ class FtdiUnifiedApp : public ServerApplication {
 public:
     FtdiUnifiedApp()
         : _showHelp(false), _verbose(false), _mode("server")
+        , _modeExplicit(false), _commandSpecified(false)
         , _cmd("status"), _payload("")
     {}
 
@@ -59,7 +60,13 @@ protected:
             .argument("mode")
             .callback(OptionCallback<FtdiUnifiedApp>(this, &FtdiUnifiedApp::handleOption)));
 
-        options.addOption(Option("cmd", "", "CLI command")
+        options.addOption(Option("command", "", "CLI command")
+            .required(false)
+            .repeatable(false)
+            .argument("command")
+            .callback(OptionCallback<FtdiUnifiedApp>(this, &FtdiUnifiedApp::handleOption)));
+
+        options.addOption(Option("cmd", "", "CLI command alias")
             .required(false)
             .repeatable(false)
             .argument("command")
@@ -102,6 +109,12 @@ protected:
             .callback(OptionCallback<FtdiUnifiedApp>(this, &FtdiUnifiedApp::handleOption)));
 
         options.addOption(Option("regs", "", "register count")
+            .required(false)
+            .repeatable(false)
+            .argument("count")
+            .callback(OptionCallback<FtdiUnifiedApp>(this, &FtdiUnifiedApp::handleOption)));
+
+        options.addOption(Option("count", "", "register count alias for /regs")
             .required(false)
             .repeatable(false)
             .argument("count")
@@ -163,8 +176,10 @@ protected:
             _verbose = true;
         } else if (name == "mode") {
             _mode = value;
-        } else if (name == "cmd") {
+            _modeExplicit = true;
+        } else if (name == "command" || name == "cmd") {
             _cmd = value;
+            _commandSpecified = true;
         } else if (name == "payload") {
             _payload = value;
         } else if (name == "duration") {
@@ -177,7 +192,7 @@ protected:
             _lengthOverride = static_cast<size_t>(std::stoul(value, nullptr, 0));
         } else if (name == "slave") {
             _slaveIdOverride = static_cast<uint8_t>(std::stoul(value, nullptr, 0));
-        } else if (name == "regs") {
+        } else if (name == "regs" || name == "count") {
             _regCountOverride = static_cast<uint16_t>(std::stoul(value, nullptr, 0));
         } else if (name == "port") {
             _portOverride = static_cast<unsigned short>(std::stoul(value, nullptr, 0));
@@ -210,7 +225,7 @@ protected:
             Poco::Logger::root().setLevel("debug");
         }
 
-        if (_mode == "cli") {
+        if (_mode == "cli" || (!_modeExplicit && _commandSpecified)) {
             return runCli();
         }
         return runServer();
@@ -275,7 +290,7 @@ private:
         hf.setCommand(commandName());
         hf.setUsage("[options]");
         hf.setHeader("FT232RL Protocol Probe");
-        hf.setFooter("Use --mode=cli with --cmd to run command-line probes.");
+        hf.setFooter("Use /mode:cli with /command:<name> to run command-line probes.");
         std::ostringstream ss;
         hf.format(ss);
         std::istringstream lines(ss.str());
@@ -292,6 +307,8 @@ private:
     bool _showHelp;
     bool _verbose;
     std::string _mode;
+    bool _modeExplicit;
+    bool _commandSpecified;
     std::string _cmd;
     std::string _payload;
     std::optional<unsigned short> _portOverride;

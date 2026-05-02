@@ -86,7 +86,7 @@ protocol_probe.exe /command:<cmd> [options]
 | `/address:<hex>` | 0 | Register or memory address (hex supported: `0x1A`) |
 | `/length:<n>` | 256 | Byte count |
 | `/slave:<hex>` | — | I2C device address or Modbus slave ID (hex supported) |
-| `/count:<n>` | 10 | Register count (Modbus, SMBus, sensor, etc.) |
+| `/regs:<n>` | 10 | Register count (Modbus, SMBus, sensor, etc.) |
 | `/payload:<hex>` | — | Hex byte string for writes/sends (e.g. `DEADBEEF`) |
 | `/port:<n>` | 8080 | HTTP server port (server mode only) |
 | `/verbose` | off | Enable trace-level logging |
@@ -125,7 +125,7 @@ All pin values are **bit indices 0–7** (D0–D7).
 | `spi-erase` | `/address /length /mosi /miso /sck /cs` | Erase SPI flash sectors |
 | `sd-read` | `/address /mosi /miso /sck /cs` | Read SD card block (address = block number) |
 | `sd-write` | `/address /payload /mosi /miso /sck /cs` | Write SD card block (exactly 512 bytes = 1024 hex chars; shorter payloads are padded with 0xFF) |
-| `spi-sensor` | `/address /count /mosi /miso /sck /cs` | Read registers from generic SPI sensor (`/address` = start register, `/count` = number of registers) |
+| `spi-sensor` | `/address /regs /mosi /miso /sck /cs` | Read registers from generic SPI sensor (`/address` = start register, `/regs` = number of registers) |
 
 #### I2C transport
 
@@ -136,9 +136,9 @@ All pin values are **bit indices 0–7** (D0–D7).
 | `i2c-write` | `/slave /address /payload /scl /sda` | Write hex payload to I2C device register |
 | `i2c-erase` | `/slave /address /length /scl /sda` | Fill I2C EEPROM region with 0xFF |
 | `i2c-fuzz` | `/scl /sda` | Fuzz I2C bus (scan all addresses) |
-| `i2c-registers` | `/slave /address /count /scl /sda` | Scan I2C device registers |
+| `i2c-registers` | `/slave /address /regs /scl /sda` | Scan I2C device registers |
 | `i2c-eeprom` | `/slave /address /length /scl /sda` | Read EEPROM (default addr 0x50); add `/payload` to write then verify |
-| `smbus-read` | `/slave /address /count /scl /sda` | Read SMBus byte (`/count:1`) or word (`/count:2`) |
+| `smbus-read` | `/slave /address /regs /scl /sda` | Read SMBus byte (`/regs:1`) or word (`/regs:2`) |
 | `smbus-write` | `/slave /address /payload /scl /sda` | Write SMBus byte (2 hex chars) or word (4 hex chars) |
 | `pmbus-read` | `/slave /address /scl /sda` | Read PMBus VOUT, IOUT, POUT and TEMP1 |
 | `sensor-read` | `/slave /scl /sda` | Read all channels of a generic I2C sensor (ADS1x15-compatible, default addr 0x48) |
@@ -151,8 +151,8 @@ All pin values are **bit indices 0–7** (D0–D7).
 | `uart-send` | `/baud /payload /tx /rx` | Send raw hex bytes |
 | `uart-receive` | `/baud /length /duration /tx /rx` | Receive raw bytes |
 | `uart-fuzz` | `/baud /payload /tx /rx` | Inject malformed UART frame |
-| `uart-terminal` | `/baud /payload /count /duration /tx /rx` | Send bytes and print raw response |
-| `modbus-read` | `/slave /address /count /baud /tx /rx` | Read Modbus holding registers (FC03) |
+| `uart-terminal` | `/baud /payload /regs /duration /tx /rx` | Send bytes and print raw response |
+| `modbus-read` | `/slave /address /regs /baud /tx /rx` | Read Modbus holding registers (FC03) |
 | `modbus-write` | `/slave /address /payload /baud /tx /rx` | Write single register FC06 (payload = 4 hex digits) |
 | `modbus-write-multi` | `/slave /address /payload /baud /tx /rx` | Write multiple registers FC16 (payload = N×4 hex digits) |
 | `nmea` | `/baud /duration /tx /rx` | Receive a NMEA sentence (prefix from config, default `$GP`) |
@@ -186,7 +186,7 @@ protocol_probe.exe /command:spi-write /address:0x1000 /payload:DEADBEEF /mosi:2 
 protocol_probe.exe /command:spi-erase /address:0 /length:4096 /mosi:2 /miso:3 /sck:4 /cs:7
 
 # Read 8 registers from a SPI sensor starting at register 0x00
-protocol_probe.exe /command:spi-sensor /address:0 /count:8 /mosi:2 /miso:3 /sck:4 /cs:7
+protocol_probe.exe /command:spi-sensor /address:0 /regs:8 /mosi:2 /miso:3 /sck:4 /cs:7
 
 # Read SD card block 0
 protocol_probe.exe /command:sd-read /address:0 /mosi:2 /miso:3 /sck:4 /cs:7
@@ -216,7 +216,7 @@ protocol_probe.exe /command:pmbus-read /slave:0x11 /scl:5 /sda:6
 protocol_probe.exe /command:sensor-read /scl:5 /sda:6
 
 # Read 5 Modbus holding registers from slave 1 at 115200 baud
-protocol_probe.exe /command:modbus-read /slave:1 /address:0 /count:5 /baud:115200 /tx:0 /rx:1
+protocol_probe.exe /command:modbus-read /slave:1 /address:0 /regs:5 /baud:115200 /tx:0 /rx:1
 
 # Write value 0x1234 to Modbus register 5 on slave 1
 protocol_probe.exe /command:modbus-write /slave:1 /address:5 /payload:1234 /baud:115200 /tx:0 /rx:1

@@ -40,23 +40,23 @@ private:
     hardware::I2cPins i2cPins() const;
 
 private:
-    const std::string& _cmd;
-    const std::string& _payload;
-    const int& _duration;
-    const uint32_t& _baud;
-    const uint32_t& _address;
-    const size_t& _length;
-    const uint8_t& _slaveId;
-    const uint16_t& _regCount;
-    const uint8_t& _pinTx;
-    const uint8_t& _pinRx;
-    const uint8_t& _pinMosi;
-    const uint8_t& _pinMiso;
-    const uint8_t& _pinSck;
-    const uint8_t& _pinCs;
-    const uint8_t& _pinScl;
-    const uint8_t& _pinSda;
-    const std::function<void()>& _displayHelp;
+    std::string _cmd;
+    std::string _payload;
+    int _duration;
+    uint32_t _baud;
+    uint32_t _address;
+    size_t _length;
+    uint8_t _slaveId;
+    uint16_t _regCount;
+    uint8_t _pinTx;
+    uint8_t _pinRx;
+    uint8_t _pinMosi;
+    uint8_t _pinMiso;
+    uint8_t _pinSck;
+    uint8_t _pinCs;
+    uint8_t _pinScl;
+    uint8_t _pinSda;
+    std::function<void()> _displayHelp;
 };
 
 } // namespace protocol_probe

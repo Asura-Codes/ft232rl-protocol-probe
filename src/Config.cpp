@@ -38,7 +38,9 @@ int ProbeConfig::_sdReadRetries  = 1000;
 int ProbeConfig::_sdWriteRetries = 10000;
 
 double ProbeConfig::_discoverySampleRate = 500000.0;
-int    ProbeConfig::_discoveryDuration   = 500;
+int    ProbeConfig::_discoveryDuration   = 2000;
+int    ProbeConfig::_discoveryUartSniffMs = 2000;
+int    ProbeConfig::_discoveryUartProbeMs = 2000;
 
 unsigned short ProbeConfig::_serverPort = 8080;
 int ProbeConfig::_vendorId  = 0x0403;
@@ -173,6 +175,8 @@ void ProbeConfig::load(Poco::Util::AbstractConfiguration& cfg) {
     _discoverySampleRate = static_cast<double>(
         getUInt32(cfg, "discovery.sample_rate_hz", static_cast<uint32_t>(_discoverySampleRate)));
     _discoveryDuration   = getInt(cfg, "discovery.default_duration_ms", _discoveryDuration);
+    _discoveryUartSniffMs = getInt(cfg, "discovery.uart_sniff_ms",      _discoveryUartSniffMs);
+    _discoveryUartProbeMs = getInt(cfg, "discovery.uart_probe_ms",      _discoveryUartProbeMs);
 
     // Device / server
     _serverPort = static_cast<unsigned short>(getUInt32(cfg, "server.port", _serverPort));
@@ -220,7 +224,7 @@ void ProbeConfig::load(Poco::Util::AbstractConfiguration& cfg) {
     _sensorSpiReadMask = static_cast<uint8_t>(getUInt32(cfg, "sensor.spi.read_mask", _sensorSpiReadMask));
 
     std::ostringstream msg;
-    msg << "ProbeConfig loaded — "
+    msg << "ProbeConfig loaded - "
         << "UART TX=D" << (int)_uartTx << "/RX=D" << (int)_uartRx
         << "  SPI MOSI=D" << (int)_spiMosi << "/MISO=D" << (int)_spiMiso
         << "/SCK=D" << (int)_spiSck << "/CS=D" << (int)_spiCs
@@ -261,6 +265,8 @@ int ProbeConfig::sdcardWriteRetries()  { return _sdWriteRetries; }
 
 double ProbeConfig::discoverySampleRate()     { return _discoverySampleRate; }
 int    ProbeConfig::discoveryDefaultDuration(){ return _discoveryDuration;  }
+int    ProbeConfig::discoveryUartSniffMs()    { return _discoveryUartSniffMs; }
+int    ProbeConfig::discoveryUartProbeMs()    { return _discoveryUartProbeMs; }
 
 unsigned short ProbeConfig::serverPort()   { return _serverPort; }
 int ProbeConfig::deviceVendorId()  { return _vendorId;  }

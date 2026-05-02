@@ -66,6 +66,8 @@ public:
     // ---- Protocol discovery --------------------------------------------
     static double discoverySampleRate();
     static int    discoveryDefaultDuration();
+    static int    discoveryUartSniffMs();
+    static int    discoveryUartProbeMs();
 
     // ---- Device / server -----------------------------------------------
     static unsigned short serverPort();
@@ -141,6 +143,8 @@ private:
 
     static double _discoverySampleRate;
     static int    _discoveryDuration;
+    static int    _discoveryUartSniffMs;
+    static int    _discoveryUartProbeMs;
 
     static unsigned short _serverPort;
     static int _vendorId;
