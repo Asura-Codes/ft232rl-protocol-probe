@@ -180,12 +180,21 @@ jobs:
     - name: List downloaded artifacts
       run: find release-artifacts -type f | sort
 
+    - name: Bundle release assets
+      working-directory: release-artifacts
+      shell: bash
+      run: |
+        zip -r ft232rl-protocol-probe-${{ github.ref_name }}-Windows.zip ft232rl-protocol-probe-*-Windows
+        tar -czf ft232rl-protocol-probe-${{ github.ref_name }}-Linux.tar.gz ft232rl-protocol-probe-*-Linux
+
+    - name: List packaged release assets
+      run: find release-artifacts -maxdepth 1 -type f | sort
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          release-artifacts/*/*.zip
-          release-artifacts/*/*.7z
-          release-artifacts/*/*.tar.gz
+          release-artifacts/*.zip
+          release-artifacts/*.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN != '' && secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
